@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/dashboard"
+            android:title="Dashboard"
+            android:icon="@drawable/ic_dasboard1"/>
+
+        <item
+            android:id="@+id/profile"
+            android:title="Edit Details"
+            android:icon="@drawable/ic_edit_"/>
+
+        <item
+            android:id="@+id/room"
+            android:title="Room Details"
+            android:icon="@drawable/ic_room"/>
+
+        <item
+            android:id="@+id/ward_inter"
+            android:title="Warden Interaction"
+            android:icon="@drawable/ic_ward_inter"/>
+
+    </group>
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/logout"
+            android:title="Logout"
+            android:icon="@drawable/ic_logout"/>
+    </group>
+
+</menu>
