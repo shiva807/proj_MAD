@@ -15,6 +15,7 @@ import androidx.fragment.app.FragmentTransaction;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,9 +31,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.zip.Inflater;
+
 import static com.example.bmseth.R.string.open;
 
-public class StuDashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, FragmentRoomDetails.onFragmentbtnSelected{
+public class StuDashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, FragmentRoomDetails.onFragmentbtnSelected,warden_details.onFragmenttxtSelected,warden_details.onFragmentemailSelected{
 
     DrawerLayout drl;
     ActionBarDrawerToggle abdt;
@@ -101,11 +104,11 @@ public class StuDashboardActivity extends AppCompatActivity implements Navigatio
 
         }
 
-        if(item.getItemId() == R.id.profile)
+        if(item.getItemId() == R.id.edit)
         {
             fragmentManager=getSupportFragmentManager();
             fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.container_fragment, new FragmentProfile());
+            fragmentTransaction.replace(R.id.container_fragment, new FragmentEditDetails());
             fragmentTransaction.commit();
         }
 
@@ -118,13 +121,20 @@ public class StuDashboardActivity extends AppCompatActivity implements Navigatio
             fragmentTransaction.commit();
         }
 
-        if(item.getItemId() == R.id.ward_inter)
+        if(item.getItemId() == R.id.warden)
         {
             fragmentManager=getSupportFragmentManager();
             fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.container_fragment, new warden_details());
             fragmentTransaction.commit();
 
+        }
+        if(item.getItemId()==R.id.about)
+        {
+            fragmentManager=getSupportFragmentManager();
+            fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.container_fragment, new FragmentAbout());
+            fragmentTransaction.commit();
         }
         if(item.getItemId() == R.id.logout)
         {
@@ -144,6 +154,29 @@ public class StuDashboardActivity extends AppCompatActivity implements Navigatio
     public void onBackPressed() {
         backButtonHandler();
         return;
+    }
+
+    @Override
+    public void onContactSelected(String phn)
+    {
+        Intent i=new Intent(Intent.ACTION_DIAL);
+        //int phn1= Integer.parseInt(phn);
+        String phn1="tel:"+phn;
+        i.setData(Uri.parse(phn1));
+        startActivity(i);
+
+    }
+
+    @Override
+    public void onEmailSelected(String email)
+    {
+            Intent intent=new Intent(Intent.ACTION_SEND);
+            String recipients[]={email};
+
+            intent.putExtra(Intent.EXTRA_EMAIL,recipients);
+            intent.putExtra(Intent.EXTRA_SUBJECT,"Hostel Leave Application");
+            intent.setType("message/rfc822");
+            startActivity(intent.createChooser(intent,"Choose"));
     }
     public void logoutHandler(){
         AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(StuDashboardActivity.this);

@@ -13,12 +13,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseException;
+//import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -41,15 +42,21 @@ public class RegistrationActivity extends AppCompatActivity {
             "(?=\\S+$)" +           //no white spaces
             ".{6,}" +               //at least 6 characters
             "$");
-    Spinner spinner;
-    ArrayList<String> branches;
 
-    EditText rname, remail, rpassword, rusn, rgender, rcontact, raddress;
+    private static final Pattern USN_PATTERN = Pattern.compile("^" + "1BM" + "\\d{2}" + "\\p{Upper}{2}" + "\\d{3}");
+
+    private static final Pattern PHONE_PATTERN= Pattern.compile("^" + "\\d{10}");
+
+    Spinner spinner,spin_gender;
+    ArrayList<String> branches,genders;
+
+    EditText rname, remail, rpassword, rusn, rcontact, raddress;
     Button submit;
 
     FirebaseUser user;
-    int flag=1;
-    String branch;
+    int flag1=1,flag2=1;
+    String branch,gender;
+    ProgressBar pbar;
 
 
     private FirebaseAuth fbauth;
@@ -63,9 +70,12 @@ public class RegistrationActivity extends AppCompatActivity {
         fbauth=FirebaseAuth.getInstance();
         final FirebaseDatabase database=FirebaseDatabase.getInstance();
         myRef=database.getReference("Students");
+
+        pbar=(ProgressBar)findViewById(R.id.progressBar2) ;
+
         spinner=(Spinner)findViewById(R.id.spinner);
         branches=new ArrayList<>();
-        branches.add("Branch");
+        branches.add("--Branch--");
         branches.add("CSE");
         branches.add("ISE");
         branches.add("ECE");
@@ -94,8 +104,28 @@ public class RegistrationActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
                 // TODO Auto-generated method stub
-                flag=0;
+                flag1=0;
 
+            }
+        });
+
+        spin_gender=(Spinner)findViewById(R.id.spinner2);
+        genders=new ArrayList<>();
+        genders.add("--Gender--");
+        genders.add("Male");
+        genders.add("Female");
+        ArrayAdapter<String>adp1=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,genders);
+        adp1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spin_gender.setAdapter(adp1);
+        spin_gender.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                gender=genders.get(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            flag2=0;
             }
         });
 
@@ -103,23 +133,24 @@ public class RegistrationActivity extends AppCompatActivity {
         rpassword=(EditText)findViewById(R.id.et4);
         rname=(EditText)findViewById(R.id.et5);
         rusn=(EditText)findViewById(R.id.et6);
-        rgender=(EditText)findViewById(R.id.et7);
+        //rgender=(EditText)findViewById(R.id.et7);
         rcontact=(EditText)findViewById(R.id.et8);
         raddress=(EditText)findViewById(R.id.et9);
         submit=(Button)findViewById(R.id.btn2);
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if(validate() && validateEmail() && validatePassword())
+            pbar.setVisibility(View.VISIBLE);
+                if(validate() && validateEmail() && validatePassword() && validateusn() &&validatecontact())
                 {
+
                     final String usr_email=remail.getText().toString().trim();
                     String usr_pswd=rpassword.getText().toString().trim();
                     final String usr_nm=rname.getText().toString().trim();
                     final String usr_usn=rusn.getText().toString().trim();
                     final String usr_phn=rcontact.getText().toString().trim();
                     final String usr_addr=raddress.getText().toString().trim();
-                    final String usr_gender=rgender.getText().toString().trim();
+                    final String usr_gender=gender;
                     // myRef.push().setValue("Hello World");
 
                     //Toast.makeText(RegistrationActivity.this, "1", Toast.LENGTH_SHORT).show();
@@ -144,6 +175,7 @@ public class RegistrationActivity extends AppCompatActivity {
                             {
                                 FirebaseAuthException e=(FirebaseAuthException)task.getException();
                                 Toast.makeText(RegistrationActivity.this, "Registration failed: "+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                pbar.setVisibility(View.GONE);
                             }
 
 
@@ -187,6 +219,30 @@ public class RegistrationActivity extends AppCompatActivity {
         }
     }
 
+    private boolean validateusn(){
+        String val_usn=rusn.getText().toString();
+        if(!USN_PATTERN.matcher(val_usn).matches()){
+            rusn.setError("USN is incorrect");
+            return false;
+        }
+        else{
+            rusn.setError(null);
+            return true;
+        }
+    }
+    private boolean validatecontact(){
+
+        String phone=rcontact.getText().toString();
+        if(!PHONE_PATTERN.matcher(phone).matches()){
+            rcontact.setError("Please enter correct phone number");
+            return false;
+        }
+        else{
+            rcontact.setError(null);
+            return true;
+        }
+    }
+
     private Boolean validate()
     {
         boolean result =false;
@@ -195,15 +251,17 @@ public class RegistrationActivity extends AppCompatActivity {
         String email1=remail.getText().toString();
         String password1=rpassword.getText().toString();
         String usn1=rusn.getText().toString();
-        String gender1=rgender.getText().toString();
         String contact1=rcontact.getText().toString();
         String address1=raddress.getText().toString();
 
-        if(name1.isEmpty() || usn1.isEmpty() || gender1.isEmpty() || contact1.isEmpty() || address1.isEmpty()||email1.isEmpty()||password1.isEmpty()||flag==0)
+        if(name1.isEmpty() || usn1.isEmpty() || contact1.isEmpty() || address1.isEmpty()||email1.isEmpty()||password1.isEmpty()||flag1==0||flag2==0) {
             Toast.makeText(this, "Please enter all details", Toast.LENGTH_SHORT).show();
+           pbar.setVisibility(View.GONE);
+        }
+
         else
             result=true;
-
+       // pbar.setVisibility(View.GONE);
         return result;
     }
 

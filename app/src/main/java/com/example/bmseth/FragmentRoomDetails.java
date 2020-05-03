@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,13 +21,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class FragmentRoomDetails  extends Fragment {
     private onFragmentbtnSelected listener;
     private FirebaseUser user;
-    private DatabaseReference myRef;
+    private DatabaseReference myRef,ref2;
     private FirebaseAuth mauth;
-    private TextView hostel,fees,duration,econtact,food,gname,gcontact;
+    private TextView hostel,fees,duration,econtact,food,gname,gcontact,room;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,6 +45,7 @@ public class FragmentRoomDetails  extends Fragment {
         View view = inflater.inflate(R.layout.fragment_room_details, container, false );
         Button bookroom=(Button)view.findViewById(R.id.button3);
         hostel=(TextView)view.findViewById(R.id.textView28);
+        room=(TextView )view.findViewById(R.id.textView29);
         fees=(TextView)view.findViewById(R.id.textView30);
         food=(TextView)view.findViewById(R.id.textView31);
         duration=(TextView)view.findViewById(R.id.textView32);
@@ -80,6 +85,7 @@ public class FragmentRoomDetails  extends Fragment {
         //if(myRef!=null) {
 
             myRef.addValueEventListener(new ValueEventListener() {
+                List<String>rooms=new ArrayList<>();
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     if(dataSnapshot.exists()) {
@@ -99,7 +105,17 @@ public class FragmentRoomDetails  extends Fragment {
                         gname.setText(gn);
                         String gc = dataSnapshot.child("guardianContact").getValue(String.class);
                         gcontact.setText(gc);
+                        String  rm=dataSnapshot.child("room").getValue(String.class);
+                        if(rm!=null)
+                        room.setText(hn+" "+rm);
+                        else
+                            room.setText("Not Assigned Yet");
+                        //ref2=FirebaseDatabase.getInstance().getReference(hn).child(hn+"Rooms");
+
+                        //Toast.makeText(getContext(),"ref2 :"+ref2.toString(),Toast.LENGTH_SHORT).show();
+
                     }
+
                 }
 
                 @Override

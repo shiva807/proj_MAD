@@ -1,5 +1,6 @@
 package com.example.bmseth;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
@@ -21,13 +22,18 @@ import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 
 public class BookRoomActivity extends AppCompatActivity {
 
@@ -36,7 +42,7 @@ public class BookRoomActivity extends AppCompatActivity {
     String duration,hostel;
     int dur_val=0;
     Button book;
-
+    int c=0;
 
     RadioGroup food;
     RadioButton fc;   int radioId;
@@ -46,6 +52,8 @@ public class BookRoomActivity extends AppCompatActivity {
     float tot_amt=0, fee_pm_val=0;
     String ta;
     int flag1=1,flag2=1;
+    String assignedRoom;
+     List<String>rooms=new ArrayList<>();
 
     EditText etdate;
     DatePickerDialog.OnDateSetListener setListener;
@@ -54,12 +62,15 @@ public class BookRoomActivity extends AppCompatActivity {
     //Firebase inits
    private FirebaseAuth mauth;
     private FirebaseUser user;
-    private DatabaseReference mref;
+    private DatabaseReference mref,mref2;
+
+    private static final Pattern PHONE_PATTERN= Pattern.compile("^" + "\\d{10}");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_book_room);
+
 
         mauth=FirebaseAuth.getInstance();
         mref= FirebaseDatabase.getInstance().getReference("StudentsRoomDetails");
@@ -79,7 +90,7 @@ public class BookRoomActivity extends AppCompatActivity {
         hostelnames.add("NBH3");
         hostelnames.add("NBH4");
         hostelnames.add("NBH5");
-        hostelnames.add("IH");
+        //hostelnames.add("IH");
         ArrayAdapter<String> adp = new ArrayAdapter<String>
                 (this, android.R.layout.simple_spinner_dropdown_item, hostelnames);
         adp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -93,6 +104,7 @@ public class BookRoomActivity extends AppCompatActivity {
                                        int arg2, long arg3) {
                 // TODO Auto-generated method stub
                 hostel=hostelnames.get(arg2);
+
 
             }
             @Override
@@ -131,6 +143,16 @@ public class BookRoomActivity extends AppCompatActivity {
                     flag2=0;
             }
         });
+        etfees=(EditText)findViewById(R.id.editText10);
+        etfees.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(hostel=="NBH1"||hostel=="NBH2"||hostel=="NBH3"||hostel=="NBH4"||hostel=="NBH5")
+                    etfees.setText(Float.toString(13000));
+                else
+                    etfees.setText(Float.toString(12000));
+            }
+        });
 
 
 
@@ -140,7 +162,7 @@ public class BookRoomActivity extends AppCompatActivity {
         food=findViewById(R.id.foodchoice);
 
 
-        etfees=(EditText)findViewById(R.id.editText10);
+
         ettotalAmount=(EditText)findViewById(R.id.editText14);
 
         /*fee_pm=etfees.getText().toString();
@@ -223,19 +245,49 @@ public class BookRoomActivity extends AppCompatActivity {
                 datePickerDialog.show();
             }
         });
+        mref2=FirebaseDatabase.getInstance().getReference("Hostels").child("Rooms");
+        //Log.d("ref2 ",mref2.toString());
+
+        mref2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                rooms.clear();
+                for (DataSnapshot dataSnapshot1:dataSnapshot.getChildren())
+                {
+                    String rm=dataSnapshot1.getValue(String.class);
+                    rooms.add(rm);
+                    c++;
+                }
+                //assignedRoom=rooms.get(0);
+                //Log.d("Room booked ", assignedRoom);
+                //assignedRoom=dataSnapshot.child("1").getValue(String.class);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
 
         book.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
-                if(validate())
+                if(validate()&&validatecontacts())
                 {
                     final String gnm=gname.getText().toString().trim();
                     final String gphn=gcontact.getText().toString().trim();
                     final String econtact=emergcontact.getText().toString().trim();
                     final String total_fees=ettotalAmount.getText().toString().trim();
-                    final String duration=etdate.getText().toString().trim();
+                    //final String duration=etdate.getText().toString().trim();
                     user=mauth.getCurrentUser();
-                    StudentRoomDetails srd=new StudentRoomDetails(hostel,total_fees,fc1,duration,econtact,gnm,gphn);
+                    assignedRoom=rooms.get(22-c);
+                    mref2=FirebaseDatabase.getInstance().getReference("Hostels").child("Rooms").child(Integer.toString(22-c));
+                    mref2.setValue(null);
+
+
+                    StudentRoomDetails srd=new StudentRoomDetails(hostel,total_fees,fc1,duration+" Months",econtact,gnm,gphn,assignedRoom);
                     mref.child(user.getUid()).setValue(srd);
                     new Timer().schedule(new TimerTask() {
                         @Override
@@ -257,6 +309,8 @@ public class BookRoomActivity extends AppCompatActivity {
 
         fc=findViewById(radioId);
         fc1= fc.getText().toString();
+        if(fc1!="Veg")
+            fc1="Non Veg";
     }
 
 
@@ -278,6 +332,32 @@ public class BookRoomActivity extends AppCompatActivity {
             result=true;
         return result;
 
+    }
+    private Boolean validatecontacts() {
+        String gc = gcontact.getText().toString();
+        String ec = emergcontact.getText().toString();
+         if(!PHONE_PATTERN.matcher(gc).matches()&&!PHONE_PATTERN.matcher(ec).matches())
+        {
+            gcontact.setError("Enter a Valid Phone Number");
+            emergcontact.setError("Enter a Valid Phone Number");
+            Toast.makeText(BookRoomActivity.this, "Enter the form carefully with correct details", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+       else if (!PHONE_PATTERN.matcher(gc).matches()) {
+            gcontact.setError("Enter a Valid Phone Number");
+            Toast.makeText(BookRoomActivity.this, "Enter the form carefully with correct details", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (!PHONE_PATTERN.matcher(ec).matches()) {
+            emergcontact.setError("Enter a Valid Phone Number");
+            Toast.makeText(BookRoomActivity.this, "Enter the form carefully with correct details", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        else {
+            gcontact.setError(null);
+            emergcontact.setError(null);
+            return true;
+        }
     }
 
 
