@@ -197,6 +197,7 @@ public class RegistrationActivity extends AppCompatActivity {
             return false;
         } else if (!Patterns.EMAIL_ADDRESS.matcher(emailInput).matches()) {
             remail.setError("Please enter a valid email address");
+            pbar.setVisibility(View.GONE);
             return false;
         } else {
             remail.setError(null);
@@ -209,9 +210,11 @@ public class RegistrationActivity extends AppCompatActivity {
 
         if (passwordInput.isEmpty()) {
             rpassword.setError("Field can't be empty");
+            pbar.setVisibility(View.GONE);
             return false;
         } else if (!PASSWORD_PATTERN.matcher(passwordInput).matches()) {
             rpassword.setError("Password too weak");
+            pbar.setVisibility(View.GONE);
             return false;
         } else {
             rpassword.setError(null);
@@ -223,6 +226,7 @@ public class RegistrationActivity extends AppCompatActivity {
         String val_usn=rusn.getText().toString();
         if(!USN_PATTERN.matcher(val_usn).matches()){
             rusn.setError("USN is incorrect");
+            pbar.setVisibility(View.GONE);
             return false;
         }
         else{
@@ -235,6 +239,7 @@ public class RegistrationActivity extends AppCompatActivity {
         String phone=rcontact.getText().toString();
         if(!PHONE_PATTERN.matcher(phone).matches()){
             rcontact.setError("Please enter correct phone number");
+            pbar.setVisibility(View.GONE);
             return false;
         }
         else{
